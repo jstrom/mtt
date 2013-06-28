@@ -1,0 +1,29 @@
+
+== SETUP ==
+   You must first install the android linux sdk (Not the ADT, unless you want eclipse also). Google for it.
+
+   sudo apt-get install ia32-libs
+
+   Launch android and update all the packages. Edit your bashrc to include the line:
+   export PATH=$PATH:$HOME/android-sdk-linux/tools/:$HOME/android-sdk-linux/platform-tools/
+
+   Then, run "updateproject.sh" to generate the build files.
+
+== RUNNING/BUILDING ==
+   (Make sure you have an android device plugged in)
+
+   Open two terminals. In the first:
+     $ ./followlog.sh
+
+   In the second:
+     $ ant debug
+     $ ./installrun.sh
+
+
+== TROUBLESHOOTING ==
+If you get an error like:
+   Failure [INSTALL_PARSE_FAILED_INCONSISTENT_CERTIFICATES]
+
+The reason is that the device already has the app installed from a
+different machine. You can uninstall the app by going to Setting s and
+uninstalling.
