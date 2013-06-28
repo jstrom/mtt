@@ -1,4 +1,6 @@
-package mtt;
+package com.mtt;
+
+import java.nio.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.*;
@@ -31,6 +33,13 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         GLES20.glCompileShader(shader);
 
         return shader;
+    }
+
+    MttGame game;
+
+    public MttGameRenderer(MttGame game)
+    {
+        this.game = game;
     }
 
 

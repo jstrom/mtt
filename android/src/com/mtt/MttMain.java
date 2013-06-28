@@ -1,4 +1,7 @@
-package mtt;
+package com.mtt;
+
+import android.opengl.*;
+import android.content.*;
 
 import android.view.*;
 import android.app.*;
@@ -12,13 +15,16 @@ public class MttMain extends Activity
 
     class MySurfaceView extends GLSurfaceView
     {
-        public MySurfaceView(Context context) {
-            super(context);
 
+        MttGameRenderer renderer;
+
+        public MySurfaceView(Context context, MttGame game) {
+            super(context);
+            renderer = new MttGameRenderer(game);
             // Create an OpenGL ES 2.0 context.
             setEGLContextClientVersion(2);
 
-            setRenderer(new MttGameRenderer());
+            setRenderer(renderer);
 
             // Render the view only when there is a change in the drawing data
             setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
@@ -26,15 +32,19 @@ public class MttMain extends Activity
         }
     }
 
+
+    MttGame game;
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 
+        game = new MttGame();
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        setContentView(new DrawDemoSurface(this));
+        setContentView(new MySurfaceView(this, game));
 
 
         enforceVersion();
