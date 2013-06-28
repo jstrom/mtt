@@ -60,7 +60,7 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         };
 
         // Set color with red, green, blue and alpha (opacity) values
-        float color[] = { 0.63671875f, 0.76953125f, 0.22265625f, 1.0f };
+        float color[] = { 0.5f, 0.3f, 0.1f, 1.0f };
 
         vertexBuffer.put(triangleCoords);
         vertexBuffer.position(0);

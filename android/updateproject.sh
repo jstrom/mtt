@@ -1,2 +1,2 @@
 #!/bin/sh
-android update project --name VxaViewer --target 1 --path .
+android update project --name MttMain --target 1 --path .
