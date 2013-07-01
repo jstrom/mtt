@@ -74,6 +74,28 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
 
     class BoardView
     {
+        // RGBA format (either 130 across the board or 0)
+        private final String xTex =
+            "XXXX\0\0\0\0\0\0\0\0\0\0\0\0XXXX" +
+            "\0\0\0\0XXXX\0\0\0\0XXXX\0\0\0\0" +
+            "\0\0\0\0\0\0\0\0XXXX\0\0\0\0\0\0\0\0" +
+            "\0\0\0\0XXXX\0\0\0\0XXXX\0\0\0\0"+
+            "XXXX\0\0\0\0\0\0\0\0\0\0\0\0XXXX";
+
+        private final String oTex =
+            "\0\0\0\0\0\0\0\0XXXX\0\0\0\0\0\0\0\0" +
+            "\0\0\0\0XXXX\0\0\0\0XXXX\0\0\0\0" +
+            "XXXX\0\0\0\0\0\0\0\0\0\0\0\0XXXX" +
+            "\0\0\0\0XXXX\0\0\0\0XXXX\0\0\0\0" +
+            "\0\0\0\0\0\0\0\0XXXX\0\0\0\0\0\0\0\0";
+
+        private final String zTex =
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+
         private final String singleColorVert =
             "uniform mat4 PM;"+
             "attribute vec4 position;" +
@@ -86,6 +108,25 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
             "uniform vec4 color;" +
             "void main() {" +
             "  gl_FragColor = color;" +
+            "}";
+
+        private final String texVert =
+            "uniform mat4 PM;"+
+            "attribute vec4 position;"+
+            "attribute vec2 texIn;"+
+            "varying vec2 texOut;"+
+            "void main()"+
+            "{"+
+            "    gl_Position = PM*position;"+
+            "    texOut = texIn;"+
+            "}";
+
+        private final String texFrag =
+            "uniform sampler2D texture;"+
+            "varying vec2 texOut;"+
+            "void main()"+
+            "{"+
+            "    gl_FragColor = texture2D(texture, texOut);"+
             "}";
 
         float pts[] = {0,1,3,1,
@@ -102,7 +143,8 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         float color[];// = {1.0f,1.0f,1.0f,1.0f};
         float linewd = 10.0f;
 
-        int programID;
+        int xTexID;
+        int linesProgramID, texProgramID;
         FloatBuffer vertexBuffer;
 
         FloatBuffer fbPM;
@@ -117,16 +159,28 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
             }
         }
 
+        final int sizeoffloat = 4;
+
         public BoardView(float offX, float offY, float scale, float linewd, float[]  color)
         {
             this.color = color;
             this.linewd = linewd;
 
+            // make projection matrix. Row major here, hack by transposing mult in shader
             PM[0*4 + 3] = offX;
             PM[1*4 + 3] = offY;
             PM[0*4 + 0] = PM[1*4 + 1] = scale;
+            {
+                ByteBuffer bb = ByteBuffer.allocateDirect(PM.length*sizeoffloat);
+                bb.order(ByteOrder.nativeOrder());
 
-            int sizeoffloat = 4;
+                fbPM = bb.asFloatBuffer();
+
+                fbPM.put(PM);
+                fbPM.position(0);
+            }
+
+            // vertex buffer for the board
             {
                 ByteBuffer bb = ByteBuffer.allocateDirect(pts.length*sizeoffloat);
                 bb.order(ByteOrder.nativeOrder());
@@ -137,35 +191,58 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
                 vertexBuffer.position(0);
             }
 
-            int vertID = loadShader(GLES20.GL_VERTEX_SHADER, singleColorVert);
-            int fragID = loadShader(GLES20.GL_FRAGMENT_SHADER, singleColorFrag);
-            programID = GLES20.glCreateProgram();
-            System.out.println("Program ID board "+ programID);
+            linesProgramID = makeProgram(singleColorVert, singleColorFrag);
+            texProgramID = makeProgram(texVert, texFrag);
+
+            xTexID = makeTexture(5, 5, GLES20.GL_RGBA, xTex);
+        }
+
+        int makeTexture(int width, int height, int format, String values)
+        {
+            byte rawbytes[] = values.getBytes(); // no trailing \0
+            ByteBuffer bb = ByteBuffer.allocateDirect(rawbytes.length);
+
+            int texid_arr[] = {0};
+            GLES20.glGenTextures(1, texid_arr, 0);
+            int texid = texid_arr[0];
+
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, format, width, height, 0, format, GLES20.GL_UNSIGNED_BYTE, bb);
+
+            return texid;
+        }
+
+
+        int makeProgram(String vert, String frag)
+        {
+
+            int vertID = loadShader(GLES20.GL_VERTEX_SHADER, vert);
+            int fragID = loadShader(GLES20.GL_FRAGMENT_SHADER, frag);
+            int programID = GLES20.glCreateProgram();
             GLES20.glAttachShader(programID, vertID);
             GLES20.glAttachShader(programID, fragID);
             GLES20.glLinkProgram(programID);
-
-
-            {
-                ByteBuffer bb = ByteBuffer.allocateDirect(PM.length*sizeoffloat);
-                bb.order(ByteOrder.nativeOrder());
-
-                fbPM = bb.asFloatBuffer();
-
-                fbPM.put(PM);
-                fbPM.position(0);
-            }
+            return programID;
         }
 
         void draw()
         {
-            System.out.println("Program ID board "+ programID);
-            GLES20.glUseProgram(programID);
+            drawBoard();
+            drawXOs();
+        }
+
+        void drawXOs()
+        {
+
+        }
+
+        void drawBoard()
+        {
+            GLES20.glUseProgram(linesProgramID);
 
             int vertexCount = pts.length/2;
             int vertexStride = 2 * 4; // bytes per vertex
 
-            int posAttr = GLES20.glGetAttribLocation(programID, "position");
+            int posAttr = GLES20.glGetAttribLocation(linesProgramID, "position");
             System.out.println("posAttr "+ posAttr);
 
             GLES20.glEnableVertexAttribArray(posAttr);
@@ -173,14 +250,11 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
 
 
 
-            int pmUnif = GLES20.glGetUniformLocation(programID, "PM");
+            int pmUnif = GLES20.glGetUniformLocation(linesProgramID, "PM");
             GLES20.glUniformMatrix4fv(pmUnif, 1, false, PM, 0);
-            System.out.println("pmUnif "+ pmUnif);
             //checkGlError("glUniformMatrix4fv");
 
-            int colorUnif = GLES20.glGetUniformLocation(programID, "color");
-            System.out.println("colorUnif "+ colorUnif);
-            System.out.printf("[%.3f,%.3f,%.3f,%.3f]\n", color[0],color[1],color[2],color[3]);
+            int colorUnif = GLES20.glGetUniformLocation(linesProgramID, "color");
             GLES20.glUniform4fv(colorUnif, 1, color, 0);
 
             GLES20.glLineWidth(linewd);
