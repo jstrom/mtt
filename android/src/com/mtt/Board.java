@@ -1,9 +1,11 @@
 package com.mtt;
 
-public interface Winnable
+public interface Board
 {
 
     abstract int whoWon();
+    abstract int whoPlayed(int row, int col);
+    abstract int playCell(int row, int col, int player);
     /*
     static final int WON_EMPTY = 0, WON_X = 1, WON_O = 2, WON_OTHER = 3;
 

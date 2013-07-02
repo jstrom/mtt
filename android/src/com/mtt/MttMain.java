@@ -41,6 +41,21 @@ public class MttMain extends Activity
         super.onCreate(savedInstanceState);
 
         game = new MttGame();
+        game.current = new TopBoard();
+
+        if (true) { // load some random game state
+            game.current.board[0][0].playCell(0,0, Common.TYPE_X);
+            game.current.board[0][0].playCell(1,1, Common.TYPE_X);
+            game.current.board[0][0].playCell(2,2, Common.TYPE_X);
+
+            game.current.board[0][0].playCell(0,1, Common.TYPE_O);
+            game.current.board[0][0].playCell(0,2, Common.TYPE_O);
+            game.current.checkWon();
+
+            System.out.println("Who won bottom left: "+game.current.board[0][0].whoWon());
+            game.current.checkWon();
+        }
+
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 

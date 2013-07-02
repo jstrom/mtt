@@ -1,6 +1,6 @@
 package com.mtt;
 
-public class TopBoard implements Winnable
+public class TopBoard implements Board
 {
     static final int N = 3;
 
@@ -25,12 +25,27 @@ public class TopBoard implements Winnable
         return 0;
     }
 
-    private void checkWon()
+    public int whoPlayed(int row, int col)
+    {
+        return board[row][col].whoWon();
+    }
+
+    public void checkWon()
     {
         if (whoWon > 0)
             return;
 
-        whoWon = Common.whoWon(board);
+        for (int i = 0; i < board.length; i++)
+            for (int j = 0; j < board[i].length; j++)
+                board[i][j].checkWon();
 
+        whoWon = Common.whoWon(this);
+
+    }
+
+
+    public int playCell(int row, int col, int type)
+    {
+        return Common.PLAY_FAIL; // can't explicitly play on top board
     }
 }
