@@ -102,27 +102,58 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
 
     class BoardView
     {
-        // RGBA format (either 130 across the board or 0)
-        private final String xTex =
-            "XXXX\0\0\0\0\0\0\0\0\0\0\0\0XXXX" +
-            "\0\0\0\0XXXX\0\0\0\0XXXX\0\0\0\0" +
-            "\0\0\0\0\0\0\0\0XXXX\0\0\0\0\0\0\0\0" +
-            "\0\0\0\0XXXX\0\0\0\0XXXX\0\0\0\0"+
-            "XXXX\0\0\0\0\0\0\0\0\0\0\0\0XXXX";
+        byte[] makeX()
+        {
+            int width = 5; int height = 5;
 
-        private final String oTex =
-            "\0\0\0\0\0\0\0\0XXXX\0\0\0\0\0\0\0\0" +
-            "\0\0\0\0XXXX\0\0\0\0XXXX\0\0\0\0" +
-            "XXXX\0\0\0\0\0\0\0\0\0\0\0\0XXXX" +
-            "\0\0\0\0XXXX\0\0\0\0XXXX\0\0\0\0" +
-            "\0\0\0\0\0\0\0\0XXXX\0\0\0\0\0\0\0\0";
+            byte out[] = new byte[width*height*4];
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    int idx = y*width + x;
 
-        private final String zTex =
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" +
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+                    if (y == x || (width -1 -x) == y) {
+                        out[idx*4 + 0] = (byte) 0xff;
+                        out[idx*4 + 1] = (byte) 0x00;
+                        out[idx*4 + 2] = (byte) 0x00;
+                        out[idx*4 + 3] = (byte) 0xff;
+                    }
+                }
+            }
+
+            return out;
+        }
+
+        byte[] makeO()
+        {
+            int width = 5; int height = 5;
+
+            byte out[] = new byte[width*height*4];
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    int idx = y*width + x;
+
+                    int manhattan_dist = Math.abs(2 - x) + Math.abs(2 - y);
+                    if (manhattan_dist == 2) {
+                    // if (y == x || (width -1 -x) == y) {
+                        out[idx*4 + 0] = (byte) 0x00;
+                        out[idx*4 + 1] = (byte) 0x00;
+                        out[idx*4 + 2] = (byte) 0xff;
+                        out[idx*4 + 3] = (byte) 0xff;
+                    }
+                }
+            }
+
+            return out;
+        }
+
+        byte[] makeZ()
+        {
+            int width = 5; int height = 5;
+
+            byte out[] = new byte[width*height*4];
+
+            return out;
+        }
 
         private final String singleColorVert =
             "uniform mat4 PM;"+
@@ -173,7 +204,7 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         float color[];// = {1.0f,1.0f,1.0f,1.0f};
         float linewd = 10.0f;
 
-        int xTexID;
+        int xTexID,oTexID,zTexID;
         int linesProgramID, texProgramID;
         FloatBuffer vertexBuffer;
 
@@ -236,17 +267,24 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
                 xTexID = makeTexture(5,5,GLES20.GL_RGBA, rawbytes);
             }
 
-            // if (true) {
-            //     double rawbytes[] = xTex.getBytes();
-            //     for (int x = 0; x < 5; x++)
-            //         for (int y = 0; y < 5; y++) {
-            //             System.out.printf(" [0x%x,0x%x,0x%x,0x%x]"
-            //         }
-            //     System.out.println();
-            // }
-            // }
+            if (true) {
+                byte rawbytes[] = makeX();//xTex.getBytes();
+                System.out.printf("xTex.getBytes().length %d\n",rawbytes.length);
+                for (int x = 0; x < 5; x++) {
+                    for (int y = 0; y < 5; y++) {
+                        System.out.printf(" [0x%x,0x%x,0x%x,0x%x]",
+                                          rawbytes[(y*5+x)*4 + 0]&0xff,
+                                          rawbytes[(y*5+x)*4 + 0]&0xff,
+                                          rawbytes[(y*5+x)*4 + 0]&0xff,
+                                          rawbytes[(y*5+x)*4 + 0]&0xff);
+                    }
+                    System.out.println();
+                }
+            }
 
-            xTexID = makeTexture(5, 5, GLES20.GL_RGBA, xTex.getBytes());
+            xTexID = makeTexture(5, 5, GLES20.GL_RGBA, makeX());
+            oTexID = makeTexture(5, 5, GLES20.GL_RGBA, makeO());
+            zTexID = makeTexture(5, 5, GLES20.GL_RGBA, makeZ());
         }
 
         int makeTexture(int width, int height, int format, byte rawbytes[])
@@ -315,6 +353,8 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         void drawXOs()
         {
             drawTexture(texProgramID, xTexID, 0, 0);
+            drawTexture(texProgramID, oTexID, 1, 2);
+            drawTexture(texProgramID, zTexID, 2, 2);
         }
 
         // Draw a texture inside the ith,jth box on the board
@@ -414,8 +454,6 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         GLES20.glEnable(GLES20.GL_BLEND); // needed for colors alpha transparency
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
-        boards.add(new BoardView(-1,-1,.66666f, 10, new float[]{.6f,.6f,.6f,1.0f}));
-
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++) {
                 float pad = .8f;
@@ -424,6 +462,9 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
                 float offY = -1 + j * .6666f  + .1f*.6666f;
                 boards.add(new BoardView(offX, offY, scale, 3, new float[]{1.0f,1.0f,1.0f,1.0f}));
             }
+
+        boards.add(new BoardView(-1,-1,.66666f, 10, new float[]{.6f,.6f,.6f,1.0f}));
+
     }
 
     @Override
