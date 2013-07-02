@@ -222,13 +222,40 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
             linesProgramID = makeProgram(singleColorVert, singleColorFrag);
             texProgramID = makeProgram(texVert, texFrag);
 
-            xTexID = makeTexture(5, 5, GLES20.GL_RGBA, xTex);
+            if (false) {
+                byte rawbytes[]= new byte[6*6*4];
+                for (int x = 0; x < 6; x++)
+                    for (int y = 0; y < 6; y++) {
+                        int idx = y*6 + x;
+                        rawbytes[idx *4 + 0] = (byte)0xff;
+                        rawbytes[idx *4 + 1] = (byte)0xff;
+                        rawbytes[idx *4 + 2] = (byte)0xff;
+                        rawbytes[idx *4 + 3] = (byte)0xff;
+                    }
+
+                xTexID = makeTexture(5,5,GLES20.GL_RGBA, rawbytes);
+            }
+
+            // if (true) {
+            //     double rawbytes[] = xTex.getBytes();
+            //     for (int x = 0; x < 5; x++)
+            //         for (int y = 0; y < 5; y++) {
+            //             System.out.printf(" [0x%x,0x%x,0x%x,0x%x]"
+            //         }
+            //     System.out.println();
+            // }
+            // }
+
+            xTexID = makeTexture(5, 5, GLES20.GL_RGBA, xTex.getBytes());
         }
 
-        int makeTexture(int width, int height, int format, String values)
+        int makeTexture(int width, int height, int format, byte rawbytes[])
         {
-            byte rawbytes[] = values.getBytes(); // no trailing \0
+            // byte rawbytes[] = values.getBytes(); // no trailing \0
             ByteBuffer bb = ByteBuffer.allocateDirect(rawbytes.length);
+            bb.order(ByteOrder.nativeOrder());
+            bb.put(rawbytes);
+            bb.position(0);
 
             checkGlError("pre Make tex");
 
@@ -244,6 +271,10 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
             // Interpolate textures
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+
+            // Clamp to edge is required to use non-power-of-2 texture sizes apparently
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
 
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, format, width, height, 0, format, GLES20.GL_UNSIGNED_BYTE, bb);
             checkGlError("glTexImage2D init");
@@ -277,7 +308,7 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
 
         void draw()
         {
-            drawBoard();
+            //drawBoard();
             drawXOs();
         }
 
@@ -351,13 +382,14 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
             int vertexStride = 2 * 4; // bytes per vertex
 
             int posAttr = GLES20.glGetAttribLocation(linesProgramID, "position");
+            System.out.println("board Pos "+ posAttr);
 
             GLES20.glEnableVertexAttribArray(posAttr);
             GLES20.glVertexAttribPointer(posAttr, 2, GLES20.GL_FLOAT, false, vertexStride, vertexBuffer);
 
             int pmUnif = GLES20.glGetUniformLocation(linesProgramID, "PM");
             GLES20.glUniformMatrix4fv(pmUnif, 1, false, PM, 0);
-            //checkGlError("glUniformMatrix4fv");
+            System.out.println("board PM "+ pmUnif);
 
             int colorUnif = GLES20.glGetUniformLocation(linesProgramID, "color");
             GLES20.glUniform4fv(colorUnif, 1, color, 0);
@@ -373,11 +405,14 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
     }
 
     @Override
-    public void onSurfaceCreated(GL10 unused, EGLConfig config) {
-
+    public void onSurfaceCreated(GL10 unused, EGLConfig config)
+    {
         // Set the background frame color
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        //GLES20.glClearColor(200/255f, 0.0f, 0.0f, 70/255f);
 
+        GLES20.glEnable(GLES20.GL_BLEND); // needed for colors alpha transparency
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         boards.add(new BoardView(-1,-1,.66666f, 10, new float[]{.6f,.6f,.6f,1.0f}));
 

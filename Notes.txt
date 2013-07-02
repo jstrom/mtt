@@ -2,3 +2,4 @@ Main differences between GL4 and GL ES:
  1) Matrices can't be transposed
  2) glDrawElements can only accept SHORT number of elements
  3) Must specify precision for all floats!
+ 4) Textures with non-power-of-two dimensions must specify GL_CLAMP_TO_EDGE
