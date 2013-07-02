@@ -20,7 +20,7 @@ public class MttMain extends Activity
 
         public MySurfaceView(Context context, MttGame game) {
             super(context);
-            renderer = new MttGameRenderer(game);
+            renderer = new MttGameRenderer(game, this);
             // Create an OpenGL ES 2.0 context.
             setEGLContextClientVersion(2);
 
@@ -28,7 +28,6 @@ public class MttMain extends Activity
 
             // Render the view only when there is a change in the drawing data
             setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-
         }
 
         int curPlayerHack = Common.TYPE_X;
@@ -36,8 +35,8 @@ public class MttMain extends Activity
         public boolean onTouchEvent(MotionEvent e)
         {
 
-            System.out.printf("MotionEvent e.x %f e.y %f type %d\n",
-                              e.getX(), e.getY(),e.getAction());
+            // System.out.printf("MotionEvent e.x %f e.y %f type %d\n",
+            //                   e.getX(), e.getY(),e.getAction());
 
             // play in a space
             if (e.getAction() == e.ACTION_UP) {
@@ -64,7 +63,7 @@ public class MttMain extends Activity
 
 
                 game.current.checkWon();
-                System.out.printf("Status: %d\n", status);
+                // System.out.printf("Status: %d\n", status);
                 requestRender();
             }
 
@@ -84,7 +83,7 @@ public class MttMain extends Activity
         game = new MttGame();
         game.current = new TopBoard();
 
-        if (true) { // load some random game state
+        if (false) { // load some random game state
             game.current.board[1][0].playCell(0,0, Common.TYPE_X);
             game.current.board[1][0].playCell(1,1, Common.TYPE_X);
             game.current.board[1][0].playCell(2,2, Common.TYPE_X);

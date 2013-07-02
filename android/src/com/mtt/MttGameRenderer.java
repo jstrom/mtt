@@ -67,13 +67,14 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
     }
 
     MttGame game;
+    GLSurfaceView view;
 
     ArrayList<BoardView> boards = new ArrayList();
 
-    public MttGameRenderer(MttGame game)
+    public MttGameRenderer(MttGame game, GLSurfaceView view)
     {
         this.game = game;
-
+        this.view = view;
     }
 
 
@@ -475,16 +476,25 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         GLES20.glEnable(GLES20.GL_BLEND); // needed for colors alpha transparency
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
-        for (int j = 0; j < 3; j++) {
-            for (int i = 0; i < 3; i++) {
-                float pad = .8f;
-                float scale  = (.666f / 3) * pad;
-                float offX = -1 + i * .6666f  + .1f*.6666f;
-                float offY = -1 + j * .6666f  + .1f*.6666f;
-                boards.add(new BoardView(offX, offY, scale, 3, new float[]{1.0f,1.0f,1.0f,1.0f}));
+        if (boards.size() == 0) {
+            for (int j = 0; j < 3; j++) {
+                for (int i = 0; i < 3; i++) {
+                    float pad = .8f;
+                    float scale  = (.666f / 3) * pad;
+                    float offX = -1 + i * .6666f  + .1f*.6666f;
+                    float offY = -1 + j * .6666f  + .1f*.6666f;
+                    boards.add(new BoardView(offX, offY, scale, 3, new float[]{1.0f,1.0f,1.0f,1.0f}));
+                }
             }
+            boards.add(new BoardView(-1,-1,.66666f, 10, new float[]{.6f,.6f,.6f,1.0f}));
         }
-        boards.add(new BoardView(-1,-1,.66666f, 10, new float[]{.6f,.6f,.6f,1.0f}));
+
+        // Doesn't seem to work unless called late/from GL thread?
+        boolean res = view.isHardwareAccelerated();
+        if (res)
+            System.out.printf("Rend Hardware Acceleration Enabled!\n");
+        else
+            System.out.printf("Rend Hardware Acceleration DISABLED!\n");
 
     }
 
