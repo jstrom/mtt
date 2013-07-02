@@ -1,6 +1,6 @@
 package com.mtt;
 
-public class Board implements Winnable
+public class TopBoard implements Winnable
 {
     static final int N = 3;
 
@@ -8,7 +8,7 @@ public class Board implements Winnable
 
     int whoWon = Common.TYPE_NONE;
 
-    public Board()
+    public TopBoard()
     {
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)

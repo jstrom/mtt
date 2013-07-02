@@ -4,6 +4,6 @@ package com.mtt;
 public class MttGame
 {
 
-    Board current;
+    TopBoard current;
 
 }
