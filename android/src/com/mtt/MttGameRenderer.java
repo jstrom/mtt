@@ -210,6 +210,7 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
 
         FloatBuffer fbPM;
 
+        Board model;
         public void print(float v[])
         {
             for (int i = 0; i < 4; i++) {
@@ -267,7 +268,7 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
                 xTexID = makeTexture(5,5,GLES20.GL_RGBA, rawbytes);
             }
 
-            if (true) {
+            if (false) {
                 byte rawbytes[] = makeX();//xTex.getBytes();
                 System.out.printf("xTex.getBytes().length %d\n",rawbytes.length);
                 for (int x = 0; x < 5; x++) {
@@ -346,15 +347,28 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
 
         void draw()
         {
-            //drawBoard();
+            drawBoard();
             drawXOs();
         }
 
         void drawXOs()
         {
-            drawTexture(texProgramID, xTexID, 0, 0);
-            drawTexture(texProgramID, oTexID, 1, 2);
-            drawTexture(texProgramID, zTexID, 2, 2);
+
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    switch(model.whoPlayed(i,j)) {
+                        case Common.TYPE_NONE:
+                            drawTexture(texProgramID, zTexID, i, j); // unnecessary
+                            break;
+                        case Common.TYPE_X:
+                            drawTexture(texProgramID, xTexID, i, j); // unnecessary
+                            break;
+                        case Common.TYPE_O:
+                            drawTexture(texProgramID, oTexID, i, j); // unnecessary
+                            break;
+                    }
+                }
+            }
         }
 
         // Draw a texture inside the ith,jth box on the board
@@ -373,7 +387,7 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
 
             int pmUnif = GLES20.glGetUniformLocation(programID, "PM");
             GLES20.glUniformMatrix4fv(pmUnif, 1, false, PM, 0);
-            System.out.println("tex PM "+ pmUnif);
+            // System.out.println("tex PM "+ pmUnif);
 
             ByteBuffer fbTri = wrapBuffer(
                 new short[]{0,1,2, 2,3,0});
@@ -395,13 +409,13 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
             int posAttr = GLES20.glGetAttribLocation(programID, "position");
             GLES20.glEnableVertexAttribArray(posAttr);
             GLES20.glVertexAttribPointer(posAttr, 2, GLES20.GL_FLOAT, false, 2*sizeoffloat, fbPos);
-            System.out.println("tex Pos "+ posAttr);
+            // System.out.println("tex Pos "+ posAttr);
             checkGlError("tex:posAttr");
 
             int texAttr = GLES20.glGetAttribLocation(programID, "texIn");
             GLES20.glEnableVertexAttribArray(texAttr);
             GLES20.glVertexAttribPointer(texAttr, 2, GLES20.GL_FLOAT, false, 2*sizeoffloat, fbTex);
-            System.out.println("tex Tex "+ texAttr);
+            // System.out.println("tex Tex "+ texAttr);
             checkGlError("tex:texAttr");
 
 
@@ -422,14 +436,14 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
             int vertexStride = 2 * 4; // bytes per vertex
 
             int posAttr = GLES20.glGetAttribLocation(linesProgramID, "position");
-            System.out.println("board Pos "+ posAttr);
+            // System.out.println("board Pos "+ posAttr);
 
             GLES20.glEnableVertexAttribArray(posAttr);
             GLES20.glVertexAttribPointer(posAttr, 2, GLES20.GL_FLOAT, false, vertexStride, vertexBuffer);
 
             int pmUnif = GLES20.glGetUniformLocation(linesProgramID, "PM");
             GLES20.glUniformMatrix4fv(pmUnif, 1, false, PM, 0);
-            System.out.println("board PM "+ pmUnif);
+            // System.out.println("board PM "+ pmUnif);
 
             int colorUnif = GLES20.glGetUniformLocation(linesProgramID, "color");
             GLES20.glUniform4fv(colorUnif, 1, color, 0);
@@ -473,11 +487,19 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         // Draw background color
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
+
+        // update board model XXX indices are brittle
+        boards.get(boards.size()-1).model = game.current;
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++) {
+                boards.get(i*3+j).model = game.current.board[i][j];
+            }
+
         for (BoardView bv : boards)
             bv.draw();
 
 
-        System.out.println("onDrawFrame()" + boards.size());
+        // System.out.println("onDrawFrame()" + boards.size());
 
     }
 
