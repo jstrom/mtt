@@ -30,6 +30,47 @@ public class MttMain extends Activity
             setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
         }
+
+        int curPlayerHack = Common.TYPE_X;
+        @Override
+        public boolean onTouchEvent(MotionEvent e)
+        {
+
+            System.out.printf("MotionEvent e.x %f e.y %f type %d\n",
+                              e.getX(), e.getY(),e.getAction());
+
+            // play in a space
+            if (e.getAction() == e.ACTION_UP) {
+
+                // convert to openGL coordinate frame
+                float y = renderer.height - e.getY();
+                float x = e.getX();
+
+                // approximate lookup for which cell to look in:
+                int boardRow = (int)(3 *y / renderer.height);
+                int boardCol = (int)(3 *x / renderer.width);
+
+
+                int subBoardRow = (int)(((3 *y)  % renderer.height) / (renderer.height/3));
+                int subBoardCol = (int)(((3 *x)  % renderer.width)/ (renderer.width/3));
+
+                System.out.printf("boardRow %d boardCol %d subBoardRow %d subBoardCol %d\n",
+                                  boardRow, boardCol, subBoardRow, subBoardCol);
+
+                // XX player management. Should do this in another class?
+                int status = game.takeAction(boardRow,boardCol,subBoardRow,subBoardCol, curPlayerHack);
+                curPlayerHack = (curPlayerHack == Common.TYPE_X ? Common.TYPE_O : Common.TYPE_X);
+
+
+
+                game.current.checkWon();
+                System.out.printf("Status: %d\n", status);
+                requestRender();
+            }
+
+            return true;
+        }
+
     }
 
 
@@ -44,12 +85,12 @@ public class MttMain extends Activity
         game.current = new TopBoard();
 
         if (true) { // load some random game state
-            game.current.board[0][0].playCell(0,0, Common.TYPE_X);
-            game.current.board[0][0].playCell(1,1, Common.TYPE_X);
-            game.current.board[0][0].playCell(2,2, Common.TYPE_X);
+            game.current.board[1][0].playCell(0,0, Common.TYPE_X);
+            game.current.board[1][0].playCell(1,1, Common.TYPE_X);
+            game.current.board[1][0].playCell(2,2, Common.TYPE_X);
 
-            game.current.board[0][0].playCell(0,1, Common.TYPE_O);
-            game.current.board[0][0].playCell(0,2, Common.TYPE_O);
+            game.current.board[1][0].playCell(0,1, Common.TYPE_O);
+            game.current.board[1][0].playCell(0,2, Common.TYPE_O);
             game.current.checkWon();
 
             System.out.println("Who won bottom left: "+game.current.board[0][0].whoWon());

@@ -10,6 +10,7 @@ import javax.microedition.khronos.opengles.*;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
+import android.view.*;
 
 public class MttGameRenderer implements GLSurfaceView.Renderer
 {
@@ -17,6 +18,8 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
 
     static final int sizeoffloat = 4;
     static final int sizeofshort = 2;
+
+    int width, height; // viewport dims
 
     public static int loadShader(int type, String shaderCode){
 
@@ -354,8 +357,8 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         void drawXOs()
         {
 
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+            for (int j = 0; j < 3; j++) {
+                for (int i = 0; i < 3; i++) {
                     switch(model.whoPlayed(i,j)) {
                         case Common.TYPE_NONE:
                             drawTexture(texProgramID, zTexID, i, j); // unnecessary
@@ -393,10 +396,14 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
                 new short[]{0,1,2, 2,3,0});
 
             ByteBuffer fbPos = wrapBuffer(
-                new float[]{rowIdx + 0.0f, colIdx + 0.0f,
-                            rowIdx + 0.0f, colIdx + 1.0f,
-                            rowIdx + 1.0f, colIdx + 1.0f,
-                            rowIdx + 1.0f, colIdx + 0.0f});
+                // new float[]{rowIdx + 0.0f, colIdx + 0.0f,
+                //             rowIdx + 0.0f, colIdx + 1.0f,
+                //             rowIdx + 1.0f, colIdx + 1.0f,
+                //             rowIdx + 1.0f, colIdx + 0.0f});
+                new float[]{colIdx + 0.0f, rowIdx + 0.0f,
+                            colIdx + 0.0f, rowIdx + 1.0f,
+                            colIdx + 1.0f, rowIdx + 1.0f,
+                            colIdx + 1.0f, rowIdx + 0.0f});
 
             ByteBuffer fbTex = wrapBuffer(
                 new float[] {0.0f,0.0f,
@@ -468,15 +475,15 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
         GLES20.glEnable(GLES20.GL_BLEND); // needed for colors alpha transparency
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++) {
+        for (int j = 0; j < 3; j++) {
+            for (int i = 0; i < 3; i++) {
                 float pad = .8f;
                 float scale  = (.666f / 3) * pad;
                 float offX = -1 + i * .6666f  + .1f*.6666f;
                 float offY = -1 + j * .6666f  + .1f*.6666f;
                 boards.add(new BoardView(offX, offY, scale, 3, new float[]{1.0f,1.0f,1.0f,1.0f}));
             }
-
+        }
         boards.add(new BoardView(-1,-1,.66666f, 10, new float[]{.6f,.6f,.6f,1.0f}));
 
     }
@@ -504,9 +511,15 @@ public class MttGameRenderer implements GLSurfaceView.Renderer
     }
 
     @Override
-    public void onSurfaceChanged(GL10 unused, int width, int height) {
+    public void onSurfaceChanged(GL10 unused, int width, int height)
+    {
+        this.width = width;
+        this.height = height;
+        System.out.printf("onSurfaceChanged width %d height %d\n",width, height);
+
         // Adjust the viewport based on geometry changes,
         // such as screen rotation
         GLES20.glViewport(0, 0, width, height);
     }
+
 }
