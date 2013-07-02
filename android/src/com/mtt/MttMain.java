@@ -57,6 +57,8 @@ public class MttMain extends Activity
         }
 
 
+        // Apparently it is not possible to disable the status bar
+        // on tablets
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         setContentView(new MySurfaceView(this, game));
